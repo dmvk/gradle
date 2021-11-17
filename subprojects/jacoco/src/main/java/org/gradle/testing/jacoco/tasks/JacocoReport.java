@@ -84,6 +84,7 @@ public class JacocoReport extends JacocoReportBase implements Reporting<JacocoRe
         final Spec<File> fileExistsSpec = new Spec<File>() {
             @Override
             public boolean isSatisfiedBy(File file) {
+                System.out.println("checking " + file);
                 return file.exists();
             }
         };
@@ -93,7 +94,7 @@ public class JacocoReport extends JacocoReportBase implements Reporting<JacocoRe
             projectName.get(),
             getAllClassDirs().filter(fileExistsSpec),
             getAllSourceDirs().filter(fileExistsSpec),
-            getExecutionData(),
+            getExecutionData().filter(fileExistsSpec),
             getReports()
         );
     }

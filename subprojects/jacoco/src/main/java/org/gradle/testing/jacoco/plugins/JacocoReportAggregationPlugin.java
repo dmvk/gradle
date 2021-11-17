@@ -28,7 +28,6 @@ import org.gradle.api.attributes.DocsType;
 import org.gradle.api.attributes.Sources;
 import org.gradle.api.attributes.TestType;
 import org.gradle.api.attributes.Usage;
-import org.gradle.api.attributes.Verification;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.plugins.jvm.JvmTestSuite;
@@ -65,18 +64,30 @@ public abstract class JacocoReportAggregationPlugin implements Plugin<Project> {
             conf.setCanBeConsumed(false);
             conf.setCanBeResolved(true);
         });
-        getJvmPluginServices().configureAsRuntimeClasspath(jacocoAggregation);
 
         ObjectFactory objects = project.getObjects();
-        ArtifactView sourcesPath = jacocoAggregation.getIncoming().artifactView(view -> {
-            view.componentFilter(id -> id instanceof ProjectComponentIdentifier);
-            view.attributes(attributes -> {
-                attributes.attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.class, Category.SOURCES));
-                attributes.attribute(Sources.SOURCES_ATTRIBUTE, objects.named(Sources.class, Sources.ALL_SOURCE_DIRS));
-                attributes.attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.class, Usage.VERIFICATION));
-            });
+        Configuration sourcesPathConf = project.getConfigurations().create("sourcesPath");
+        sourcesPathConf.extendsFrom(jacocoAggregation);
+        sourcesPathConf.setCanBeResolved(true);
+        sourcesPathConf.setVisible(false);
+        sourcesPathConf.setCanBeConsumed(false);
+        sourcesPathConf.attributes(attributes -> {
+            attributes.attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.class, Usage.VERIFICATION));
+            attributes.attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.class, Category.SOURCES));
+            attributes.attribute(Sources.SOURCES_ATTRIBUTE, objects.named(Sources.class, Sources.ALL_SOURCE_DIRS));
         });
-        ArtifactView analyzedClasses = jacocoAggregation.getIncoming().artifactView(view -> {
+        ArtifactView sourcesPath = sourcesPathConf.getIncoming().artifactView(view -> {
+            view.componentFilter(id -> id instanceof ProjectComponentIdentifier);
+        });
+
+        Configuration classes = project.getConfigurations().create("classes");
+        classes.extendsFrom(jacocoAggregation);
+        classes.setCanBeResolved(true);
+        classes.setVisible(false);
+        classes.setCanBeConsumed(false);
+        getJvmPluginServices().configureAsRuntimeClasspath(classes);
+
+        ArtifactView analyzedClasses = classes.getIncoming().artifactView(view -> {
             view.componentFilter(id -> id instanceof ProjectComponentIdentifier);
         });
 
@@ -101,7 +112,12 @@ public abstract class JacocoReportAggregationPlugin implements Plugin<Project> {
             ExtensiblePolymorphicDomainObjectContainer<TestSuite> testSuites = testing.getSuites();
             testSuites.withType(JvmTestSuite.class).configureEach(testSuite -> {
                 reporting.getReports().create(testSuite.getName() + "CodeCoverageReport", JacocoCoverageReport.class, report -> {
-                    report.getExecutionData().from(resolvableJacocoData(jacocoAggregation, objects, testSuite.getTestType()));
+                    Configuration codeCoverageFiles = project.getConfigurations().create(testSuite.getName() + "CodeCoverage");
+                    codeCoverageFiles.extendsFrom(jacocoAggregation);
+                    codeCoverageFiles.setCanBeResolved(true);
+                    codeCoverageFiles.setVisible(false);
+                    codeCoverageFiles.setCanBeConsumed(false);
+                    report.getExecutionData().from(resolvableJacocoData(codeCoverageFiles, objects, testSuite.getTestType()));
                 });
 //                testSuite.getTargets().all(target -> {
 //                    target.getTestTask().configure(test -> {
@@ -113,19 +129,17 @@ public abstract class JacocoReportAggregationPlugin implements Plugin<Project> {
     }
 
     public static FileCollection resolvableJacocoData(Configuration jacocoAggregation, ObjectFactory objects, Property<String> name) {
+        jacocoAggregation.attributes(attributes -> {
+            attributes.attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.class, Usage.VERIFICATION));
+            attributes.attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.class, Category.DOCUMENTATION));
+            attributes.attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named(DocsType.class, DocsType.JACOCO_COVERAGE));
+            attributes.attribute(TestType.TEST_TYPE_ATTRIBUTE, name.map(tt -> objects.named(TestType.class, tt)));
+        });
+
         // A resolvable configuration to collect JaCoCo coverage data
         ArtifactView coverageDataPath = jacocoAggregation.getIncoming().artifactView(view -> {
             view.componentFilter(id -> id instanceof ProjectComponentIdentifier);
             view.lenient(true);
-            view.attributes(attributes -> {
-                attributes.attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.class, Category.DOCUMENTATION));
-                attributes.attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named(DocsType.class, DocsType.JACOCO_COVERAGE));
-                attributes.attribute(Verification.TARGET_NAME_ATTRIBUTE, objects.named(Verification.class, "test")); // TODO delete me
-                attributes.attribute(Verification.TEST_SUITE_NAME_ATTRIBUTE, objects.named(Verification.class, "test"));  // TODO delete me
-                // TODO: need to support provider with TestType value
-                attributes.attribute(TestType.TEST_TYPE_ATTRIBUTE, objects.named(TestType.class, name.get()));
-                attributes.attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.class, Usage.VERIFICATION));
-            });
         });
         return coverageDataPath.getFiles();
     }
