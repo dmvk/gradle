@@ -25,6 +25,7 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
 import org.gradle.api.attributes.Category;
 import org.gradle.api.attributes.DocsType;
+import org.gradle.api.attributes.Sources;
 import org.gradle.api.attributes.TestType;
 import org.gradle.api.attributes.Usage;
 import org.gradle.api.attributes.Verification;
@@ -70,9 +71,9 @@ public abstract class JacocoReportAggregationPlugin implements Plugin<Project> {
         ArtifactView sourcesPath = jacocoAggregation.getIncoming().artifactView(view -> {
             view.componentFilter(id -> id instanceof ProjectComponentIdentifier);
             view.attributes(attributes -> {
-                attributes.attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.class, Usage.JAVA_RUNTIME));
-                attributes.attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.class, Category.DOCUMENTATION));
-                attributes.attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named(DocsType.class, "source-folders"));
+                attributes.attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.class, Category.SOURCES));
+                attributes.attribute(Sources.SOURCES_ATTRIBUTE, objects.named(Sources.class, Sources.ALL_SOURCE_DIRS));
+                attributes.attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.class, Usage.VERIFICATION));
             });
         });
         ArtifactView analyzedClasses = jacocoAggregation.getIncoming().artifactView(view -> {
@@ -86,8 +87,8 @@ public abstract class JacocoReportAggregationPlugin implements Plugin<Project> {
 
         // configure user-specified reports
         reporting.getReports().withType(JacocoCoverageReport.class).configureEach(report -> {
-            report.getClasses().from(analyzedClasses.getFiles());
-            report.getSources().from(sourcesPath.getFiles());
+            report.getClasses().from(analyzedClasses.getFiles()); //FIXME analyzedClasses contains three jars, nested an extra level deep i.e. analyzedClasses.getFiles().getFiles()
+            report.getSources().from(sourcesPath.getFiles()); // FIXME empty
             // TODO wire TestType; it's the only public API; other methods can be concealed
         });
 
