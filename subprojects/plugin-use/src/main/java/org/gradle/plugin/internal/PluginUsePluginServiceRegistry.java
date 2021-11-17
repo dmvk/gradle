@@ -27,7 +27,6 @@ import org.gradle.api.internal.file.FileCollectionFactory;
 import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.internal.initialization.RootScriptDomainObjectContext;
 import org.gradle.api.internal.plugins.PluginInspector;
-import org.gradle.api.internal.plugins.PluginRegistry;
 import org.gradle.initialization.ClassLoaderScopeRegistry;
 import org.gradle.internal.Factory;
 import org.gradle.internal.build.BuildIncluder;
@@ -47,7 +46,7 @@ import org.gradle.plugin.management.internal.autoapply.DefaultAutoAppliedPluginR
 import org.gradle.plugin.use.internal.DefaultPluginRequestApplicator;
 import org.gradle.plugin.use.internal.InjectedPluginClasspath;
 import org.gradle.plugin.use.internal.PluginDependencyResolutionServices;
-import org.gradle.plugin.use.internal.PluginRequestApplicator;
+import org.gradle.plugin.use.internal.PluginRepositoriesProvider;
 import org.gradle.plugin.use.internal.PluginResolverFactory;
 import org.gradle.plugin.use.resolve.service.internal.ClientInjectedClasspathPluginResolver;
 import org.gradle.plugin.use.resolve.service.internal.DefaultInjectedClasspathPluginResolver;
@@ -77,6 +76,11 @@ public class PluginUsePluginServiceRegistry extends AbstractPluginServiceRegistr
     private static class BuildScopeServices {
         void configure(ServiceRegistration registration) {
             registration.add(PluginResolverFactory.class);
+            registration.add(DefaultPluginRequestApplicator.class);
+        }
+
+        PluginRepositoriesProvider createPluginResolverFactory(PluginDependencyResolutionServices dependencyResolutionServices) {
+            return dependencyResolutionServices.getPluginRepositoriesProvider();
         }
 
         AutoAppliedPluginRegistry createAutoAppliedPluginRegistry(BuildDefinition buildDefinition) {
@@ -85,14 +89,6 @@ public class PluginUsePluginServiceRegistry extends AbstractPluginServiceRegistr
 
         AutoAppliedPluginHandler createAutoAppliedPluginHandler(AutoAppliedPluginRegistry registry) {
             return new DefaultAutoAppliedPluginHandler(registry);
-        }
-
-        PluginRequestApplicator createPluginRequestApplicator(PluginRegistry pluginRegistry, PluginDependencyResolutionServices dependencyResolutionServices,
-                                                              PluginResolverFactory pluginResolverFactory, PluginResolutionStrategyInternal internalPluginResolutionStrategy,
-                                                              PluginInspector pluginInspector, CachedClasspathTransformer cachedClasspathTransformer) {
-            return new DefaultPluginRequestApplicator(
-                pluginRegistry, pluginResolverFactory, dependencyResolutionServices.getPluginRepositoriesProvider(),
-                internalPluginResolutionStrategy, pluginInspector, cachedClasspathTransformer);
         }
 
         ClientInjectedClasspathPluginResolver createInjectedClassPathPluginResolver(ClassLoaderScopeRegistry classLoaderScopeRegistry, PluginInspector pluginInspector,
