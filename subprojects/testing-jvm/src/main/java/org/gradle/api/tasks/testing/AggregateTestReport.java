@@ -16,11 +16,18 @@
 
 package org.gradle.api.tasks.testing;
 
+import org.gradle.api.Incubating;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.reporting.ReportSpec;
 import org.gradle.api.tasks.TaskProvider;
 
+/**
+ * TODO javadoc
+ *
+ * @since 7.4
+ */
+@Incubating
 public interface AggregateTestReport extends ReportSpec {
     ConfigurableFileCollection getBinaryResults();
     DirectoryProperty getDestinationDir();

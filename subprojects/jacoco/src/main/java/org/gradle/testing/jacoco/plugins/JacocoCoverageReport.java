@@ -16,12 +16,18 @@
 
 package org.gradle.testing.jacoco.plugins;
 
+import org.gradle.api.Incubating;
 import org.gradle.api.file.ConfigurableFileCollection;
-import org.gradle.api.provider.Property;
 import org.gradle.api.reporting.ReportSpec;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 
+/**
+ * TODO javadoc
+ *
+ * @since 7.4
+ */
+@Incubating
 public interface JacocoCoverageReport extends ReportSpec {
     ConfigurableFileCollection getSources();
     ConfigurableFileCollection getClasses();
@@ -30,5 +36,7 @@ public interface JacocoCoverageReport extends ReportSpec {
     TaskProvider<JacocoReport> getReportTask();
 
 //    Property<String> getTestType();
-    default String getTestType() { return "test";};
+    default String getTestType() {
+        return "test";
+    };
 }

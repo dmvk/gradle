@@ -17,6 +17,7 @@
 package org.gradle.api.plugins;
 
 import org.gradle.api.ExtensiblePolymorphicDomainObjectContainer;
+import org.gradle.api.Incubating;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.ArtifactView;
@@ -24,13 +25,14 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
 import org.gradle.api.attributes.Category;
 import org.gradle.api.attributes.DocsType;
-import org.gradle.api.attributes.TestSuiteType;
+import org.gradle.api.attributes.TestType;
 import org.gradle.api.attributes.Usage;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.tasks.testing.DefaultAggregateTestReport;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.plugins.jvm.JvmTestSuite;
 import org.gradle.api.plugins.jvm.internal.JvmPluginServices;
+import org.gradle.api.provider.Property;
 import org.gradle.api.reporting.ReportingExtension;
 import org.gradle.api.tasks.testing.AggregateTestReport;
 import org.gradle.testing.base.TestSuite;
@@ -38,9 +40,15 @@ import org.gradle.testing.base.TestingExtension;
 
 import javax.inject.Inject;
 
+/**
+ * TODO javadoc
+ *
+ * @since 7.4
+ */
+@Incubating
 public abstract class TestReportAggregationPlugin implements Plugin<Project> {
 
-    public static String TEST_REPORT_AGGREGATION_CONFIGURATION_NAME = "testReportAggregation";
+    public static final String TEST_REPORT_AGGREGATION_CONFIGURATION_NAME = "testReportAggregation";
 
     @Inject
     protected abstract JvmPluginServices getJvmPluginServices();
@@ -84,7 +92,7 @@ public abstract class TestReportAggregationPlugin implements Plugin<Project> {
             ExtensiblePolymorphicDomainObjectContainer<TestSuite> testSuites = testing.getSuites();
             testSuites.withType(JvmTestSuite.class).configureEach(testSuite -> {
                 reporting.getReports().create(testSuite.getName() + "AggregateTestReport", AggregateTestReport.class, report -> {
-                    report.getBinaryResults().from(resolvableTestResultData(testAggregation, objects, testSuite.getName()));
+                    report.getBinaryResults().from(resolvableTestResultData(testAggregation, objects, testSuite.getTestType()));
                     report.getDestinationDir().convention(javaPluginExtension.getTestResultsDir().dir(testSuite.getName() + "/aggregated-results"));
 //                    testSuite.getTargets().all(target -> {
 //                        report.getTestTasks().add(target.getTestTask().get());
@@ -100,17 +108,17 @@ public abstract class TestReportAggregationPlugin implements Plugin<Project> {
         });
     }
 
-    public static FileCollection resolvableTestResultData(Configuration testAggregation, ObjectFactory objects, String name) {
+    public static FileCollection resolvableTestResultData(Configuration testAggregation, ObjectFactory objects, Property<String> name) {
         // A resolvable configuration to collect test result data
         ArtifactView resultsDataPath = testAggregation.getIncoming().artifactView(view -> {
             view.componentFilter(it -> it instanceof ProjectComponentIdentifier);
             //view.lenient(true);
             view.attributes(attributes -> {
-                attributes.attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.class, Usage.JAVA_RUNTIME));
+                attributes.attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.class, Usage.VERIFICATION));
                 attributes.attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.class, Category.DOCUMENTATION));
-                attributes.attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named(DocsType.class, "test-result-data"));
+                attributes.attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named(DocsType.class, DocsType.TEST_RESULTS));
                 // TODO: need to support provider
-                attributes.attribute(TestSuiteType.TEST_SUITE_TYPE_ATTRIBUTE, objects.named(TestSuiteType.class, name));
+                attributes.attribute(TestType.TEST_TYPE_ATTRIBUTE, objects.named(TestType.class, name.get()));
             });
         });
         return resultsDataPath.getFiles();

@@ -35,9 +35,8 @@ public abstract class DefaultAggregateTestReport implements AggregateTestReport 
         reportTask = tasks.register(name, TestReport.class, new Action<TestReport>() { // no lambdas; this module enforces language level 6
             @Override
             public void execute(TestReport task) {
-                task.reportOn(getBinaryResults());
-                task.getHack().from(getBinaryResults());
-                task.setDestinationDir(getDestinationDir().get().getAsFile());
+                task.getTestResults().from(getBinaryResults());
+                task.getDestinationDirectory().set(getDestinationDir());
             }
         });
     }

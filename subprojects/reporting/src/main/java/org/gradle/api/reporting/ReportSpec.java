@@ -16,7 +16,14 @@
 
 package org.gradle.api.reporting;
 
+import org.gradle.api.Incubating;
 import org.gradle.api.Named;
 
+/**
+ * TODO javadoc
+ *
+ * @since 7.4
+ */
+@Incubating
 public interface ReportSpec extends Named {
 }

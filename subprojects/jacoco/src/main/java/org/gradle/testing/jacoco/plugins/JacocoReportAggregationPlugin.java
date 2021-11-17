@@ -17,6 +17,7 @@
 package org.gradle.testing.jacoco.plugins;
 
 import org.gradle.api.ExtensiblePolymorphicDomainObjectContainer;
+import org.gradle.api.Incubating;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.ArtifactView;
@@ -24,12 +25,13 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
 import org.gradle.api.attributes.Category;
 import org.gradle.api.attributes.DocsType;
-import org.gradle.api.attributes.TestSuiteType;
+import org.gradle.api.attributes.TestType;
 import org.gradle.api.attributes.Usage;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.plugins.jvm.JvmTestSuite;
 import org.gradle.api.plugins.jvm.internal.JvmPluginServices;
+import org.gradle.api.provider.Property;
 import org.gradle.api.reporting.ReportingExtension;
 import org.gradle.internal.jacoco.DefaultJacocoCoverageReport;
 import org.gradle.testing.base.TestSuite;
@@ -37,10 +39,15 @@ import org.gradle.testing.base.TestingExtension;
 
 import javax.inject.Inject;
 
-
+/**
+ * TODO javadoc
+ *
+ * @since 7.4
+ */
+@Incubating
 public abstract class JacocoReportAggregationPlugin implements Plugin<Project> {
 
-    public static String JACOCO_AGGREGATION_CONFIGURATION_NAME = "jacocoAggregation";
+    public static final String JACOCO_AGGREGATION_CONFIGURATION_NAME = "jacocoAggregation";
 
     @Inject
     protected abstract JvmPluginServices getJvmPluginServices();
@@ -92,7 +99,7 @@ public abstract class JacocoReportAggregationPlugin implements Plugin<Project> {
             ExtensiblePolymorphicDomainObjectContainer<TestSuite> testSuites = testing.getSuites();
             testSuites.withType(JvmTestSuite.class).configureEach(testSuite -> {
                 reporting.getReports().create(testSuite.getName() + "CodeCoverageReport", JacocoCoverageReport.class, report -> {
-                    report.getExecutionData().from(resolvableJacocoData(jacocoAggregation, objects, testSuite.getName()));
+                    report.getExecutionData().from(resolvableJacocoData(jacocoAggregation, objects, testSuite.getTestType()));
                 });
 //                testSuite.getTargets().all(target -> {
 //                    target.getTestTask().configure(test -> {
@@ -103,17 +110,17 @@ public abstract class JacocoReportAggregationPlugin implements Plugin<Project> {
         });
     }
 
-    public static FileCollection resolvableJacocoData(Configuration jacocoAggregation, ObjectFactory objects, String name) {
+    public static FileCollection resolvableJacocoData(Configuration jacocoAggregation, ObjectFactory objects, Property<String> name) {
         // A resolvable configuration to collect JaCoCo coverage data
         ArtifactView coverageDataPath = jacocoAggregation.getIncoming().artifactView(view -> {
             view.componentFilter(id -> id instanceof ProjectComponentIdentifier);
             view.lenient(true);
             view.attributes(attributes -> {
-                attributes.attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.class, Usage.JAVA_RUNTIME));
+                attributes.attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.class, Usage.VERIFICATION));
                 attributes.attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.class, Category.DOCUMENTATION));
-                attributes.attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named(DocsType.class, "jacoco-coverage-data"));
+                attributes.attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named(DocsType.class, DocsType.JACOCO_COVERAGE));
                 // TODO: need to support provider with TestType value
-                attributes.attribute(TestSuiteType.TEST_SUITE_TYPE_ATTRIBUTE, objects.named(TestSuiteType.class, name));
+                attributes.attribute(TestType.TEST_TYPE_ATTRIBUTE, objects.named(TestType.class, name.get()));
             });
         });
         return coverageDataPath.getFiles();

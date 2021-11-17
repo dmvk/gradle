@@ -16,6 +16,7 @@
 package org.gradle.api.reporting;
 
 import org.gradle.api.ExtensiblePolymorphicDomainObjectContainer;
+import org.gradle.api.Incubating;
 import org.gradle.api.Project;
 import org.gradle.api.file.Directory;
 import org.gradle.api.file.DirectoryProperty;
@@ -133,6 +134,12 @@ public class ReportingExtension {
         }
     }
 
+    /**
+     * TODO javadoc
+     *
+     * @since 7.4
+     */
+    @Incubating
     public ExtensiblePolymorphicDomainObjectContainer<ReportSpec> getReports() {
         return reports;
     }
