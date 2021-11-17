@@ -17,6 +17,7 @@
 package org.gradle.testing.jacoco.plugins;
 
 import org.gradle.api.Incubating;
+import org.gradle.api.attributes.TestType;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.reporting.ReportSpec;
 import org.gradle.api.tasks.TaskProvider;
@@ -37,6 +38,6 @@ public interface JacocoCoverageReport extends ReportSpec {
 
 //    Property<String> getTestType();
     default String getTestType() {
-        return "test";
+        return TestType.UNIT_TESTS;
     };
 }

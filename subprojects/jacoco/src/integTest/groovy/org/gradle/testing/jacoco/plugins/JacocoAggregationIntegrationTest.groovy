@@ -150,8 +150,8 @@ class JacocoAggregationIntegrationTest extends AbstractIntegrationSpec {
             apply plugin: 'org.gradle.jacoco-report-aggregation'
         """
         when:
-//        succeeds(":application:testCodeCoverageReport", "application:outgoingVariants", ":application:dependencies", ":transitive:outgoingVariants")
-        succeeds(":application:testCodeCoverageReport")
+        succeeds(":application:testCodeCoverageReport", "application:outgoingVariants", ":application:dependencies", ":transitive:outgoingVariants")
+//        succeeds(":application:testCodeCoverageReport")
         then:
         file("transitive/build/jacoco/test.exec").assertExists()
         file("direct/build/jacoco/test.exec").assertExists()
