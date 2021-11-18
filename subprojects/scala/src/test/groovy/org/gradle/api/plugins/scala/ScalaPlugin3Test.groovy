@@ -22,19 +22,17 @@ import org.gradle.api.reporting.ReportingExtension
 import org.gradle.api.tasks.scala.ScalaDoc
 import org.gradle.test.fixtures.file.LeaksFileHandles
 import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
+import org.gradle.util.FlakyTest
 import org.gradle.util.TestUtil
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
-import spock.lang.Issue
 
 import static org.gradle.api.tasks.TaskDependencyMatchers.dependsOn
 import static org.hamcrest.CoreMatchers.equalTo
 import static org.hamcrest.CoreMatchers.instanceOf
 import static org.hamcrest.MatcherAssert.assertThat
 
-@Ignore
-@Issue("https://github.com/gradle/gradle-private/issues/3440")
+@FlakyTest(issue = "https://github.com/gradle/gradle-private/issues/3440")
 class ScalaPlugin3Test {
     @Rule
     public TestNameTestDirectoryProvider temporaryFolder = new TestNameTestDirectoryProvider(getClass())

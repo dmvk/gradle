@@ -182,6 +182,12 @@ fun Test.jvmVersionForTest(): JavaLanguageVersion {
     return JavaLanguageVersion.of(getPropertyFromAnySource("testJavaVersion").getOrElse(JavaVersion.current().majorVersion))
 }
 
+fun Test.configureTestQuarantine() {
+    if (project.providers.gradleProperty("flakyTestQuarantine").isPresent) {
+        jvmArgumentProviders.add(CommandLineArgumentProvider { listOf("-Dorg.gradle.flakyTestQuarantine=true") })
+    }
+}
+
 fun Test.configureJvmForTest() {
     jvmArgumentProviders.add(CiEnvironmentProvider(this))
     val launcher = project.javaToolchains.launcherFor {
@@ -236,6 +242,7 @@ fun configureTests() {
 
         maxParallelForks = project.maxParallelForks
 
+        configureTestQuarantine()
         configureJvmForTest()
         addOsAsInputs()
 

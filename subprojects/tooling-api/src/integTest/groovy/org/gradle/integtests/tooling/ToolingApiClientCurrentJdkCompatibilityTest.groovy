@@ -17,9 +17,9 @@
 package org.gradle.integtests.tooling
 
 import org.gradle.api.JavaVersion
-import spock.lang.Ignore
+import org.gradle.util.FlakyTest
 
-@Ignore("https://github.com/gradle/gradle-private/issues/3430")
+@FlakyTest(issue = "https://github.com/gradle/gradle-private/issues/3430")
 class ToolingApiClientCurrentJdkCompatibilityTest extends ToolingApiClientJdkCompatibilityTest {
     JavaVersion getClientJdkVersion() {
         return JavaVersion.current()
