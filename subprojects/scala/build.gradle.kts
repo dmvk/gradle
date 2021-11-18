@@ -29,7 +29,7 @@ dependencies {
     implementation(libs.guava)
     implementation(libs.inject)
 
-    compileOnly("org.scala-sbt:zinc_2.12:1.3.5")
+    compileOnly("org.scala-sbt:zinc_2.12:1.5.7")
 
     testImplementation(project(":base-services-groovy"))
     testImplementation(project(":files"))
