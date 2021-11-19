@@ -18,6 +18,8 @@ package org.gradle.api.internal.tasks.scala;
 
 import org.gradle.cache.Cache;
 import org.gradle.cache.internal.MapBackedCache;
+import sbt.internal.inc.PlainVirtualFile;
+import xsbti.VirtualFile;
 import xsbti.compile.AnalysisStore;
 import xsbti.compile.FileAnalysisStore;
 
@@ -28,7 +30,11 @@ public class AnalysisStoreProvider {
 
     private final Cache<File, AnalysisStore> cache = new MapBackedCache<>(new ConcurrentHashMap<>());
 
-    AnalysisStore get(final File analysisFile) {
-        return AnalysisStore.getCachedStore(cache.get(analysisFile, () -> AnalysisStore.getThreadSafeStore(FileAnalysisStore.getDefault(analysisFile))));
+    AnalysisStore get(final VirtualFile analysisFile) {
+        if (!(analysisFile instanceof PlainVirtualFile)) {
+            throw new IllegalStateException("Unexpected implementation.");
+        }
+        final File cast = ((PlainVirtualFile) analysisFile).toPath().toFile();
+        return AnalysisStore.getCachedStore(cache.get(cast, () -> AnalysisStore.getThreadSafeStore(FileAnalysisStore.getDefault(cast))));
     }
 }
